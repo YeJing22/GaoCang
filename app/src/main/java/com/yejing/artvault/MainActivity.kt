@@ -202,6 +202,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         CrashLog.install(applicationContext)
+        ThemeState.apply(Prefs(applicationContext).themePreset)
         // 全面屏：内容画到状态栏 / 导航栏下面，底栏自己消化 inset
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
@@ -325,6 +326,7 @@ private fun Root() {
     var mirrorTotal by remember { mutableIntStateOf(0) }
     var nameFields by remember { mutableStateOf(prefs.mirrorNameFields) }
     var lastCleanedId by remember { mutableStateOf(prefs.lastCleanedId) }
+    var pendingUndoSync by remember { mutableStateOf(false) }
     var petLabel by remember { mutableStateOf(prefs.petLabel) }
     var seenOnboarding by remember { mutableStateOf(prefs.seenPicker) }
 
@@ -409,7 +411,18 @@ private fun Root() {
             withContext(Dispatchers.IO) { load(ctx, prefs) }
         }
         screen = loaded
-        if (dirty.isNotEmpty()) {
+        if (pendingUndoSync) {
+            pendingUndoSync = false
+            val validIds = loaded.arts.mapTo(HashSet()) { it.id }
+            val prevId = loaded.root?.let { r ->
+                withContext(Dispatchers.IO) { OperationJournal.lastTouchedArtId(r, validIds) }
+            } ?: loaded.arts
+                .filter { it.counted && Gap.entries.none { g -> it.matchesGap(g) } && !it.updatedAt.isNullOrBlank() }
+                .maxByOrNull { it.updatedAt!! }
+                ?.id
+            lastCleanedId = prevId
+            prefs.lastCleanedId = prevId
+        } else if (dirty.isNotEmpty()) {
             val cleaned = loaded.arts
                 .filter { it.id in dirty && it.counted && Gap.entries.none { g -> it.matchesGap(g) } }
                 .maxByOrNull { it.updatedAt ?: "" }
@@ -1023,6 +1036,10 @@ private fun Root() {
                 root = s.root,
                 onClose = { showHistory = false },
                 onChanged = { tick++ },
+                onUndo = {
+                    pendingUndoSync = true
+                    tick++
+                },
             )
 
             showTrash && s?.root != null -> TrashScreen(
@@ -1898,6 +1915,7 @@ private fun Root() {
                                             toast(ctx, "这条操作已被撤销，不能再撤")
                                         } else {
                                             toast(ctx, "已撤销：${rec.label}")
+                                            pendingUndoSync = true
                                             tick++
                                         }
                                     }

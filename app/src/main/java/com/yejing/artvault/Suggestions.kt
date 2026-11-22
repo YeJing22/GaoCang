@@ -33,8 +33,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -417,6 +420,8 @@ internal fun TagPickerDialog(
 
     // 同 ArtistPickerDialog：搜索框就是新建输入框，搜不到就点「添加新标签「xxx」」
     var query by remember { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
 
     val q = query.trim()
     val filtered = remember(allSorted, q) {
@@ -468,7 +473,9 @@ internal fun TagPickerDialog(
                                 singleLine = true,
                                 textStyle = T.bodySm.copy(color = Paper),
                                 cursorBrush = SolidColor(Accent),
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .focusRequester(focusRequester),
                             )
                         }
                         if (query.isNotEmpty()) {
@@ -519,6 +526,8 @@ internal fun TagPickerDialog(
                                 .clickable {
                                     if (q !in picked) picked = picked + q
                                     query = ""
+                                    focusRequester.requestFocus()
+                                    keyboard?.show()
                                 }
                                 .padding(horizontal = 13.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -580,6 +589,11 @@ internal fun TagPickerDialog(
                                             .background(if (on) AccentC else CHigh)
                                             .clickable {
                                                 picked = if (on) picked - name else picked + name
+                                                if (!on) {
+                                                    query = ""
+                                                    focusRequester.requestFocus()
+                                                    keyboard?.show()
+                                                }
                                             }
                                             .padding(horizontal = 13.dp, vertical = 10.dp),
                                         verticalAlignment = Alignment.CenterVertically,

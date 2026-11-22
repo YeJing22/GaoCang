@@ -119,6 +119,23 @@ object OperationJournal {
     /** 有没有正在录制的操作——writeJsonAtomic 用它决定要不要多读一次旧内容 */
     internal fun isRecording(): Boolean = recording != null
 
+    /**
+     * 从剩余未撤销的操作历史里，找出最近一次操作过的稿件 id（按时间倒序）。
+     * 用于撤销后把「上次整理」回退到上一次操作过的稿件。
+     */
+    fun lastTouchedArtId(root: File, validIds: Set<String>): String? {
+        for (rec in history(root)) {
+            if (!rec.done) continue
+            for (c in rec.changes.asReversed()) {
+                if (c.path.startsWith("meta/artworks/") && c.path.endsWith(".json")) {
+                    val id = c.path.removePrefix("meta/artworks/").removeSuffix(".json")
+                    if ('/' !in id && id in validIds) return id
+                }
+            }
+        }
+        return null
+    }
+
     private fun stopRecording() {
         recording = null
         recordingRoot = null

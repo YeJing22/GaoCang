@@ -38,6 +38,11 @@ class Prefs(ctx: Context) {
         get() = sp.getString("filter_presets", "[]") ?: "[]"
         set(v) = sp.edit().putString("filter_presets", v).apply()
 
+    /** 主题配色预设 id（见 ThemePreset），默认夜色琥珀 */
+    var themePreset: String
+        get() = sp.getString("theme_preset", ThemePreset.AmberNight.id) ?: ThemePreset.AmberNight.id
+        set(v) = sp.edit().putString("theme_preset", v).apply()
+
     /**
      * 相册镜像的文件名带哪些字段（存 enum 名，顺序由 Mirror.NameField 决定）。
      * 默认四项全要；全空会让文件名退化成「未命名」，所以在 setter 里兜住。

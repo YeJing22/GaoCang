@@ -45,7 +45,7 @@
 环境要求：JDK 17 + Android SDK Platform 37（`sdkmanager "platforms;android-37.2"`）；依赖最低要求 `compileSdk` 37，不能用 35/36 编译。
 
 ```bash
-# 构建 Debug 包（包名 com.yejing.artvault.oss，可与正式版并存）
+# 构建 Debug 包
 ./gradlew :app:assembleDebug
 
 # 运行单元测试

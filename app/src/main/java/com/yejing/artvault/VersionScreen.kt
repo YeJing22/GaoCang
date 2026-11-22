@@ -655,6 +655,7 @@ fun VersionEditor(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(CardBg)
+                            .border(1.dp, Outline, RoundedCornerShape(12.dp))
                             .padding(horizontal = 13.dp, vertical = 12.dp),
                     )
                     Spacer(Modifier.height(Space.s))

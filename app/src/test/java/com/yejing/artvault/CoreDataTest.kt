@@ -295,4 +295,37 @@ class CoreDataTest {
         assertEquals(listOf(f3, f1, f2), userIds)
         assertEquals(setOf("derived", "fill"), sysKeys)
     }
+
+    @Test
+    fun `themePreset falls back safely and drives top-level tokens`() {
+        assertEquals(ThemePreset.AmberNight, ThemePreset.fromId(null))
+        assertEquals(ThemePreset.AmberNight, ThemePreset.fromId("unknown_id"))
+        ThemeState.apply(ThemePreset.AmberNight.id)
+        assertEquals(ThemePreset.AmberNight.palette.accent, Accent)
+        assertEquals(ThemePreset.AmberNight.palette.ink, Ink)
+    }
+
+    @Test
+    fun `operationJournal lastTouchedArtId falls back to previous art after undo`() = runBlocking {
+        val vault = tmp.newFolder("undo_last_vault")
+        val f1 = File(vault, "meta/artworks/art1.json").apply {
+            parentFile?.mkdirs()
+            writeText("""{"id":"art1","title":"旧1","versions":[]}""")
+        }
+        val f2 = File(vault, "meta/artworks/art2.json").apply {
+            writeText("""{"id":"art2","title":"旧2","versions":[]}""")
+        }
+        OperationJournal.run(vault, "art", "改1") {
+            writeJsonAtomic(f1, JSONObject("""{"id":"art1","title":"新1","versions":[]}"""))
+        }
+        Thread.sleep(5)
+        OperationJournal.run(vault, "art", "改2") {
+            writeJsonAtomic(f2, JSONObject("""{"id":"art2","title":"新2","versions":[]}"""))
+        }
+        val valid = setOf("art1", "art2")
+        assertEquals("art2", OperationJournal.lastTouchedArtId(vault, valid))
+
+        OperationJournal.undoLatest(vault)
+        assertEquals("art1", OperationJournal.lastTouchedArtId(vault, valid))
+    }
 }

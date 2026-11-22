@@ -61,6 +61,7 @@ fun HistoryScreen(
     root: File,
     onClose: () -> Unit,
     onChanged: () -> Unit,
+    onUndo: () -> Unit = onChanged,
 ) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -89,7 +90,7 @@ fun HistoryScreen(
             toast(ctx, if (r == null) "没有可撤销的操作" else "已撤销：${r.label}")
             if (r != null) {
                 refresh++
-                onChanged()
+                onUndo()
             }
         }
     }

@@ -28,7 +28,7 @@ android {
         applicationId = "com.yejing.artvault"
         minSdk = 28
         targetSdk = 35
-        versionCode = 2
+        versionCode = 3
         versionName = "0.1.0"
     }
 
@@ -46,8 +46,6 @@ android {
 
     buildTypes {
         debug {
-            // 与原包 com.yejing.artvault 并存安装，测试 public 分支时不覆盖日常库与偏好
-            applicationIdSuffix = ".oss"
         }
         release {
             isMinifyEnabled = true
