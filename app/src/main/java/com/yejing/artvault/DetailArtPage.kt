@@ -109,6 +109,7 @@ internal fun ArtPage(
     roleCounts: Map<String, Int> = emptyMap(),
     savedScroll: Int = 0,
     onSaveScroll: (Int) -> Unit = {},
+    onMoveVersionsToArt: ((String, List<String>) -> Unit)? = null,
 ) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -184,6 +185,7 @@ internal fun ArtPage(
                 onCommandHandled = onVersionCmdHandled,
                 // 制品导出时要在文件名里带**原稿**的角色，所以把原稿一起传下去
                 allArts = listOfNotNull(sourceArt, art),
+                onMoveVersionsToArt = onMoveVersionsToArt,
             )
         } else {
             val curIdx = vPager.currentPage.coerceIn(0, (versions.size - 1).coerceAtLeast(0))

@@ -328,4 +328,38 @@ class CoreDataTest {
         OperationJournal.undoLatest(vault)
         assertEquals("art1", OperationJournal.lastTouchedArtId(vault, valid))
     }
+
+    @Test
+    fun `moveVersionsToArt appends to target, preserves primaries, and supports undo`() = runBlocking {
+        val vault = tmp.newFolder("move_ver_vault")
+        val artDir = File(vault, "meta/artworks").apply { mkdirs() }
+        File(artDir, "src1.json").writeText(
+            """{"id":"src1","title":"源稿","versions":[
+                {"id":"v1","blob":"b1","label":"主图","ext":"png","w":10,"h":10,"is_primary":true},
+                {"id":"v2","blob":"b2","label":"拆分版","ext":"png","w":10,"h":10,"is_primary":false}
+            ]}"""
+        )
+        File(artDir, "dst1.json").writeText(
+            """{"id":"dst1","title":"目标稿","versions":[
+                {"id":"v9","blob":"b9","label":"目标主图","ext":"png","w":10,"h":10,"is_primary":true}
+            ]}"""
+        )
+
+        val moved = OperationJournal.run(vault, "art", "移入版本") {
+            ArtworkCommands.moveVersionsToArt(vault, "src1", "dst1", listOf("v2"))
+        }
+        assertEquals(1, moved)
+
+        val srcAfter = parseArt(File(artDir, "src1.json").readText())!!
+        val dstAfter = parseArt(File(artDir, "dst1.json").readText())!!
+        assertEquals(listOf("v1"), srcAfter.versions.map { it.id })
+        assertEquals(listOf("v9", "v2"), dstAfter.versions.map { it.id })
+        assertEquals("v9", dstAfter.primary?.id)
+
+        OperationJournal.undoLatest(vault)
+        val srcUndo = parseArt(File(artDir, "src1.json").readText())!!
+        val dstUndo = parseArt(File(artDir, "dst1.json").readText())!!
+        assertEquals(listOf("v1", "v2"), srcUndo.versions.map { it.id })
+        assertEquals(listOf("v9"), dstUndo.versions.map { it.id })
+    }
 }

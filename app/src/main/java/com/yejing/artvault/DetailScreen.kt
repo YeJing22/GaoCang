@@ -183,6 +183,7 @@ fun DetailScreen(
     onFilterWorld: (String) -> Unit = {},
     /** 跨覆盖层跳转返回时恢复各稿件的滚动位置（按 art.id 记，由 Root 持有） */
     savedScrolls: MutableMap<String, Int> = remember { HashMap() },
+    onMoveVersionsToArt: ((String, List<String>) -> Unit)? = null,
 ) {
     val pager = rememberPagerState(
         initialPage = startIndex.coerceIn(0, (arts.size - 1).coerceAtLeast(0))
@@ -288,6 +289,7 @@ fun DetailScreen(
                 roleCounts = roleCounts,
                 savedScroll = savedScrolls[curArt.id] ?: 0,
                 onSaveScroll = { savedScrolls[curArt.id] = it },
+                onMoveVersionsToArt = onMoveVersionsToArt,
             )
         }
 

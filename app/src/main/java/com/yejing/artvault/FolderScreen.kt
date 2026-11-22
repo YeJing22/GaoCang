@@ -106,6 +106,7 @@ fun FolderScreen(
     onFilterTag: (String) -> Unit = {},
     onFilterWorld: (String) -> Unit = {},
     savedScrolls: MutableMap<String, Int> = remember { HashMap() },
+    onMoveVersionsToArt: ((String, List<String>) -> Unit)? = null,
 ) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -174,6 +175,7 @@ fun FolderScreen(
             onFilterTag = onFilterTag,
             onFilterWorld = onFilterWorld,
             savedScrolls = savedScrolls,
+            onMoveVersionsToArt = onMoveVersionsToArt,
         )
         return
     }

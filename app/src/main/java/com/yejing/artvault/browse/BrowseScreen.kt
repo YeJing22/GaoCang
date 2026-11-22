@@ -199,6 +199,13 @@ fun BrowseScreen(
     var pendingJumpId by remember { mutableStateOf<String?>(null) }
     val months = remember(shown) { buildMonths(shown) }
     val allRows = remember(months) { months.flatMap { m -> m.arts.chunked(3) } }
+    // 每行是否是当月第一行：第一行自身带 MonthTitleSlot（高度 = MonthHeaderH），无需额外偏移；
+    // 非首行跳转时要往下留出 MonthHeaderH + 8dp，避免卡片顶部被冻结月标头遮挡。
+    val rowIsMonthFirst = remember(months) {
+        months.flatMap { m -> List((m.arts.size + 2) / 3) { it == 0 } }
+    }
+    val density0 = androidx.compose.ui.platform.LocalDensity.current
+    val jumpOffsetPx = remember(density0) { with(density0) { -(MonthHeaderH + 8.dp).roundToPx() } }
     val hasCleaned = remember(lastCleanedId, arts) { lastCleanedId != null && arts.any { it.id == lastCleanedId } }
     val cleanedRowIdx = remember(lastCleanedId, allRows) {
         lastCleanedId?.let { id -> allRows.indexOfFirst { row -> row.any { it.id == id } } }?.takeIf { it >= 0 }
@@ -211,7 +218,8 @@ fun BrowseScreen(
         val target = pendingJumpId ?: return@LaunchedEffect
         val idx = allRows.indexOfFirst { row -> row.any { it.id == target } }
         if (idx >= 0) {
-            listState.scrollToItem(idx)
+            val offset = if (rowIsMonthFirst.getOrElse(idx) { false }) 0 else jumpOffsetPx
+            listState.scrollToItem(idx, offset)
             pendingJumpId = null
         }
     }
@@ -326,7 +334,8 @@ fun BrowseScreen(
                 {
                     val idx = cleanedRowIdx
                     if (idx != null) {
-                        scope.launch { listState.scrollToItem(idx) }
+                        val offset = if (rowIsMonthFirst.getOrElse(idx) { false }) 0 else jumpOffsetPx
+                        scope.launch { listState.scrollToItem(idx, offset) }
                     } else {
                         pendingJumpId = lastCleanedId
                         onFilter(Filter(sort = filter.sort))

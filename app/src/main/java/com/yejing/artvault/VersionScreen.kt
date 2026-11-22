@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -101,6 +102,8 @@ fun VersionEditor(
     allArts: List<Art> = emptyList(),
     /** 内嵌在详情页的 verticalScroll 里时为 true：列表完全展开由外层滚动，行内导出/删除由底部条接管 */
     embedded: Boolean = onSelect != null,
+    /** 多选版本后选择「合并至其他稿件」：把 (srcArtId, verIds) 交由上层进入选稿模式 */
+    onMoveVersionsToArt: ((String, List<String>) -> Unit)? = null,
 ) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -125,6 +128,7 @@ fun VersionEditor(
     // 拆分进行中：挡住连点。第二次点击本来也必然失败（版本已经被第一批摘走了），
     // 但那会额外弹一句「拆分失败」，看着像第一次没成功
     var splitting by remember { mutableStateOf(false) }
+    var askSplitMode by remember(art.id) { mutableStateOf(false) }
 
     /** 当前版本在 [items] 里的位置；-1 = 不知道 / 已经不在列表里（按 id 查，不按下标猜） */
     val currentIdx = if (currentId == null) -1 else items.indexOfFirst { it.id == currentId }
@@ -608,11 +612,13 @@ fun VersionEditor(
                     Modifier
                         .clip(RoundedCornerShape(10.dp))
                         .background(if (canSplit) Accent else CHigh)
-                        .clickable(enabled = canSplit) { splitSelected() }
+                        .clickable(enabled = canSplit) {
+                            if (onMoveVersionsToArt != null) askSplitMode = true else splitSelected()
+                        }
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                 ) {
                     Text(
-                        "拆成新稿",
+                        "拆出",
                         style = T.bodySm,
                         color = if (canSplit) OnAccent else Muted,
                     )
@@ -634,6 +640,73 @@ fun VersionEditor(
         if (!embedded) {
             Spacer(Modifier.navigationBarsPadding())
         }
+    }
+
+    if (askSplitMode) {
+        val pickedItems = items.filter { it.uid in selected }
+        val verIds = pickedItems.map { it.id }.filter { it.isNotBlank() }
+        AlertDialog(
+            onDismissRequest = { askSplitMode = false },
+            containerColor = CardBg,
+            shape = RoundedCornerShape(24.dp),
+            title = { Text("拆出 ${pickedItems.size} 个版本", style = T.titleSm, color = Paper) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(Space.s)) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(CHigh)
+                            .clickable {
+                                askSplitMode = false
+                                splitSelected()
+                            }
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("拆出为新稿", style = T.body, color = Paper, fontWeight = FontWeight.Medium)
+                            Spacer(Modifier.height(2.dp))
+                            Text("新建一条稿件承接所选版本，原稿价格保持不变", style = T.micro, color = Muted)
+                        }
+                        Text("›", style = T.titleSm, color = Muted)
+                    }
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(CHigh)
+                            .clickable {
+                                askSplitMode = false
+                                if (root == null) {
+                                    Toast.makeText(ctx, "演示库不能拆分", Toast.LENGTH_SHORT).show()
+                                } else if (pickedItems.size >= items.size) {
+                                    Toast.makeText(ctx, "原稿至少保留一个版本", Toast.LENGTH_SHORT).show()
+                                } else if (verIds.size != pickedItems.size) {
+                                    Toast.makeText(ctx, "版本标识缺失，退出「版本管理」再进一次后重试", Toast.LENGTH_LONG).show()
+                                } else {
+                                    selecting = false
+                                    selected = emptySet()
+                                    onMoveVersionsToArt?.invoke(art.id, verIds)
+                                }
+                            }
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("合并至其他稿件", style = T.body, color = Paper, fontWeight = FontWeight.Medium)
+                            Spacer(Modifier.height(2.dp))
+                            Text("去稿库选一件已有稿件，将所选版本并入其中", style = T.micro, color = Muted)
+                        }
+                        Text("›", style = T.titleSm, color = Muted)
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { askSplitMode = false }) { Text("取消", style = T.body, color = Muted) }
+            },
+        )
     }
 
     val r = renaming

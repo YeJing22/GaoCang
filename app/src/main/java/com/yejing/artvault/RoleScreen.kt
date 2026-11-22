@@ -106,6 +106,7 @@ fun RoleScreen(
     onFilterWorld: (String) -> Unit = {},
     savedScrolls: MutableMap<String, Int> = remember { HashMap() },
     petLabel: String = "附属",
+    onMoveVersionsToArt: ((String, List<String>) -> Unit)? = null,
 ) {
     val role = tax.roles.firstOrNull { it.id == roleId }
     if (role == null) {
@@ -226,6 +227,7 @@ fun RoleScreen(
             onFilterTag = onFilterTag,
             onFilterWorld = onFilterWorld,
             savedScrolls = savedScrolls,
+            onMoveVersionsToArt = onMoveVersionsToArt,
         )
         return
     }

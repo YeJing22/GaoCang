@@ -91,9 +91,13 @@ private sealed interface MediaMode {
     data class NewDerived(val sourceId: String) : MediaMode
 }
 
-/** 通用「点一张稿」选择态（屏幕取字套用 / 制品关联原稿 / 选库内已有稿转为制品共用） */
-private data class PickArt(val mode: Mode, val artId: String = "") {
-    enum class Mode { Apply, Link, AdoptDerived }
+/** 通用「点一张稿」选择态（屏幕取字套用 / 制品关联原稿 / 选库内已有稿转为制品 / 拆出版本合并至其他稿件） */
+private data class PickArt(
+    val mode: Mode,
+    val artId: String = "",
+    val verIds: List<String> = emptyList(),
+) {
+    enum class Mode { Apply, Link, AdoptDerived, MoveVersions }
 }
 
 /**
@@ -611,6 +615,8 @@ private fun Root() {
 
         fun enterPickSource(artId: String) = enterPickMode(PickArt(PickArt.Mode.Link, artId))
         fun enterAdoptDerived(sourceId: String) = enterPickMode(PickArt(PickArt.Mode.AdoptDerived, sourceId))
+        fun enterMoveVersions(srcArtId: String, verIds: List<String>) =
+            enterPickMode(PickArt(PickArt.Mode.MoveVersions, srcArtId, verIds))
 
         fun openRoleFromDetail(roleId: String) {
             linkedArtId = null
@@ -724,6 +730,37 @@ private fun Root() {
                     }
                     adoptConfirm = pickedId to p.artId
                 }
+                PickArt.Mode.MoveVersions -> {
+                    if (pickedId == p.artId) {
+                        toast(ctx, "不能合并到当前同一件稿件")
+                        return
+                    }
+                    val r = sc.root
+                    if (r == null) {
+                        toast(ctx, "演示库不能改")
+                        return
+                    }
+                    val dstTitle = sc.arts.firstOrNull { it.id == pickedId }?.title?.ifBlank { "未命名" } ?: "未命名"
+                    val srcId = p.artId
+                    val verIds = p.verIds
+                    scope.launch {
+                        val moved = withContext(Dispatchers.IO) {
+                            runCatching {
+                                OperationJournal.run(r, "art", "将 ${verIds.size} 个版本并入「$dstTitle」") {
+                                    ArtworkCommands.moveVersionsToArt(r, srcId, pickedId, verIds, sc.tax)
+                                }
+                            }.getOrElse { 0 }
+                        }
+                        if (moved > 0) {
+                            pickArt = null
+                            searchOpen = false
+                            toast(ctx, "已将 $moved 个版本并入「$dstTitle」")
+                            tick++
+                        } else {
+                            toast(ctx, "合并失败，检查源稿是否仍存在")
+                        }
+                    }
+                }
             }
         }
 
@@ -790,6 +827,8 @@ private fun Root() {
                     val srcTitle = s?.arts?.firstOrNull { it.id == curPick.artId }?.title?.ifBlank { "未命名" } ?: "原稿"
                     "点一张已有稿件，转为「$srcTitle」的制品"
                 }
+                PickArt.Mode.MoveVersions ->
+                    "点一张目标稿件，将 ${curPick.verIds.size} 个版本并入其中"
             }
         } else null
 
@@ -996,6 +1035,7 @@ private fun Root() {
             onFilterTag = { tag -> filterFromDetail(Filter(tags = setOf(tag), sort = filter.sort)) },
             onFilterWorld = { wid -> filterFromDetail(Filter(worldId = wid, sort = filter.sort)) },
             savedScrolls = detailScrolls,
+            onMoveVersionsToArt = ::enterMoveVersions,
             )
         }
 
@@ -1440,6 +1480,7 @@ private fun Root() {
                         onFilterTag = { tag -> filterFromDetail(Filter(tags = setOf(tag), sort = filter.sort)) },
                         onFilterWorld = { wid -> filterFromDetail(Filter(worldId = wid, sort = filter.sort)) },
                         savedScrolls = detailScrolls,
+            onMoveVersionsToArt = ::enterMoveVersions,
                     )
                 }
             }
@@ -1485,6 +1526,7 @@ private fun Root() {
                 onFilterTag = { tag -> filterFromDetail(Filter(tags = setOf(tag), sort = filter.sort)) },
                 onFilterWorld = { wid -> filterFromDetail(Filter(worldId = wid, sort = filter.sort)) },
                 savedScrolls = detailScrolls,
+            onMoveVersionsToArt = ::enterMoveVersions,
                 petLabel = petLabel,
             )
 
@@ -1541,6 +1583,7 @@ private fun Root() {
                 onFilterTag = { tag -> filterFromDetail(Filter(tags = setOf(tag), sort = filter.sort)) },
                 onFilterWorld = { wid -> filterFromDetail(Filter(worldId = wid, sort = filter.sort)) },
                 savedScrolls = detailScrolls,
+            onMoveVersionsToArt = ::enterMoveVersions,
             )
 
             detailOpen && s != null -> DetailScreen(
@@ -1582,6 +1625,7 @@ private fun Root() {
                 onFilterTag = { tag -> filterFromDetail(Filter(tags = setOf(tag), sort = filter.sort)) },
                 onFilterWorld = { wid -> filterFromDetail(Filter(worldId = wid, sort = filter.sort)) },
                 savedScrolls = detailScrolls,
+            onMoveVersionsToArt = ::enterMoveVersions,
             )
 
             // 搜索页放在详情之后：从搜索结果进详情时，详情盖在上面；

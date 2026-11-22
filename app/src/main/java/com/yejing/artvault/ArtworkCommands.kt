@@ -437,6 +437,52 @@ object ArtworkCommands {
         newSlotId
     }
 
+    /**
+     * 把源槽勾选的若干版本移入另一件已有稿件（不建新槽、不动原价格、不丢目标主图）。
+     * 先写目标槽再写源槽：源槽写盘失败时抛异常，由 OperationJournal 用 before 全量回滚目标槽。
+     * @return 实际移入的版本数；参数非法返回 0
+     */
+    suspend fun moveVersionsToArt(
+        root: File,
+        srcArtId: String,
+        dstArtId: String,
+        verIds: Collection<String>,
+        tax: Taxonomy? = null,
+    ): Int = withContext(Dispatchers.IO) {
+        if (verIds.isEmpty() || srcArtId == dstArtId) return@withContext 0
+        val src = read(root, srcArtId) ?: return@withContext 0
+        val dst = read(root, dstArtId) ?: return@withContext 0
+        val srcArr = src.optJSONArray("versions") ?: return@withContext 0
+        val dstArr = dst.optJSONArray("versions") ?: JSONArray()
+
+        val moved = ArrayList<JSONObject>()
+        val kept = ArrayList<JSONObject>()
+        for (i in 0 until srcArr.length()) {
+            val v = srcArr.optJSONObject(i) ?: continue
+            val id = v.strOrNull("id").orEmpty()
+            if (id.isNotEmpty() && id in verIds) {
+                moved += JSONObject(v.toString()).apply { put("is_primary", false) }
+            } else {
+                kept += v
+            }
+        }
+        if (moved.isEmpty() || kept.isEmpty()) return@withContext 0
+
+        val nextDst = JSONArray()
+        for (i in 0 until dstArr.length()) {
+            dstArr.optJSONObject(i)?.let { nextDst.put(it) }
+        }
+        moved.forEach { nextDst.put(it) }
+        dst.put("versions", nextDst)
+        src.put("versions", JSONArray().also { a -> kept.forEach { a.put(it) } })
+
+        if (!commit(root, dstArtId, dst, tax)) return@withContext 0
+        if (!commit(root, srcArtId, src, tax)) {
+            error("源稿写盘失败，已撤销本次移动")
+        }
+        moved.size
+    }
+
     // ── 合并 ───────────────────────────────────────────────────────────
 
     /**
