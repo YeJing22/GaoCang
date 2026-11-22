@@ -89,17 +89,21 @@ internal fun bgName(b: BgMode) = when (b) {
 
 @Composable
 internal fun CheckerBoard(cell: Dp = 12.dp) {
-    val dark = ThemeState.palette.isDark
-    val c1 = if (dark) Color(0xFF161C26) else Color(0xFFEBE7E0)
-    val c2 = if (dark) Color(0xFF11161E) else Color(0xFFF5F2EC)
+    val p = ThemeState.palette
+    val c1 = p.checkerA
+    val c2 = p.checkerB
     Canvas(Modifier.fillMaxSize()) {
-        val s = cell.toPx()
+        // 先铺满整块底色，再只画奇数格，且格长取整像素：
+        // 避免浮点边长抗锯齿在浅色棋盘格之间透出底下黑色背景（全屏大图 #040406），形成细灰网格线。
+        drawRect(c2)
+        val s = kotlin.math.round(cell.toPx()).coerceAtLeast(1f)
         val cols = (size.width / s).toInt() + 1
         val rows = (size.height / s).toInt() + 1
         for (r in 0 until rows) {
             for (c in 0 until cols) {
-                val color = if ((r + c) % 2 == 0) c1 else c2
-                drawRect(color, Offset(c * s, r * s), Size(s, s))
+                if ((r + c) % 2 == 0) {
+                    drawRect(c1, Offset(c * s, r * s), Size(s, s))
+                }
             }
         }
     }

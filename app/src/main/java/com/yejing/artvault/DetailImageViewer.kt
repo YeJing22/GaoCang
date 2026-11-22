@@ -261,6 +261,9 @@ internal fun ImageViewer(
         )
 
         // 顶栏：关闭 + 版本页码
+        val isDark = ThemeState.palette.isDark
+        val btnBg = if (isDark) PanelVeil else CardBg.copy(alpha = 0.88f)
+        val chipBg = if (isDark) Color.Black.copy(alpha = 0.55f) else CardBg.copy(alpha = 0.88f)
         Row(
             Modifier
                 .fillMaxWidth()
@@ -271,7 +274,7 @@ internal fun ImageViewer(
             RoundIconButton(
                 icon = GI.Close,
                 onClick = onClose,
-                background = PanelVeil,
+                background = btnBg,
                 tint = Paper,
                 size = 36.dp,
                 iconSize = 16.dp,
@@ -289,7 +292,7 @@ internal fun ImageViewer(
             RoundIconButton(
                 icon = GI.External,
                 onClick = { onExportVersion(vPager.currentPage) },
-                background = PanelVeil,
+                background = btnBg,
                 tint = Paper,
                 size = 36.dp,
                 iconSize = 17.dp,
@@ -325,7 +328,7 @@ internal fun ImageViewer(
                     style = T.label,
                     color = Paper,
                     modifier = Modifier
-                        .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(50))
+                        .background(chipBg, RoundedCornerShape(50))
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                 )
             }

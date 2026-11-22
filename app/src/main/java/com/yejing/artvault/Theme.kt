@@ -37,6 +37,8 @@ data class ThemePalette(
     val scrim: Color,
     val panelVeil: Color,
     val paper70: Color,
+    val checkerA: Color,
+    val checkerB: Color,
     val rimBrush: Brush,
     val chartColors: List<Color>,
 )
@@ -81,6 +83,8 @@ enum class ThemePreset(
             scrim = Color(0xCC040506),
             panelVeil = Color(0x4D090B10),
             paper70 = Color(0xB3EEF0F6),
+            checkerA = Color(0xFF161C26),
+            checkerB = Color(0xFF11161E),
             rimBrush = Brush.verticalGradient(
                 0f to Color.White.copy(alpha = 0.08f),
                 0.5f to Color.White.copy(alpha = 0.028f),
@@ -128,6 +132,8 @@ enum class ThemePreset(
             scrim = Color(0xCC05070B),
             panelVeil = Color(0x4D0B0E14),
             paper70 = Color(0xB3EAEFF6),
+            checkerA = Color(0xFF19202D),
+            checkerB = Color(0xFF121822),
             rimBrush = Brush.verticalGradient(
                 0f to Color.White.copy(alpha = 0.08f),
                 0.5f to Color.White.copy(alpha = 0.028f),
@@ -175,6 +181,8 @@ enum class ThemePreset(
             scrim = Color(0x73181410),
             panelVeil = Color(0x66191612),
             paper70 = Color(0xB31F1C18),
+            checkerA = Color(0xFFEAE4DA),
+            checkerB = Color(0xFFF5F2EC),
             rimBrush = Brush.verticalGradient(
                 0f to Color.Black.copy(alpha = 0.05f),
                 1f to Color.Black.copy(alpha = 0.08f),
@@ -221,6 +229,8 @@ enum class ThemePreset(
             scrim = Color(0x73101824),
             panelVeil = Color(0x66141C2A),
             paper70 = Color(0xB3182233),
+            checkerA = Color(0xFFCFD9E6),
+            checkerB = Color(0xFFE2E9F2),
             rimBrush = Brush.verticalGradient(
                 0f to Color.White.copy(alpha = 0.55f),
                 1f to Color(0xFF182233).copy(alpha = 0.08f),
