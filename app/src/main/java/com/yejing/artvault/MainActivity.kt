@@ -430,11 +430,13 @@ private fun Root() {
                 lastCleanedId = cleaned.id
                 prefs.lastCleanedId = cleaned.id
             }
-        } else if (lastCleanedId == null) {
+        }
+        if (lastCleanedId == null || loaded.arts.none { it.id == lastCleanedId }) {
             val fallback = loaded.arts
                 .filter { it.counted && Gap.entries.none { g -> it.matchesGap(g) } && !it.updatedAt.isNullOrBlank() }
                 .maxByOrNull { it.updatedAt!! }
-            if (fallback != null) lastCleanedId = fallback.id
+            lastCleanedId = fallback?.id
+            if (fallback != null) prefs.lastCleanedId = fallback.id
         }
         android.util.Log.d(
             "GaoCangPerf",

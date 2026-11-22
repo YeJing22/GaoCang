@@ -4,6 +4,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -799,10 +801,12 @@ internal fun FilterRow(
 
         if (showStatusChips) {
             Row(
-                // 只有两枚胶囊，不需要横向滚动；给 weight 是为了让排序钮始终贴右边
+                // 4 位数件数（如 1731 / 1687）在 360dp 屏或放大字号下总宽会超过剩余宽度，
+                // 必须允许横向滚动，否则第三枚「上次整理」胶囊会被挤出或裁掉。
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = if (showTune) Space.s else 0.dp, end = Space.s),
+                    .padding(start = if (showTune) Space.s else 0.dp, end = Space.s)
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(7.dp),
             ) {
                 ChipPill(
