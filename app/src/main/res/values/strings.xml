@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">稿仓</string>
+    <!-- 无障碍服务：在系统「无障碍」列表里显示的名字与说明 -->
+    <string name="sense_label">稿仓 · 屏幕取字</string>
+    <string name="sense_desc">读取当前屏幕上的文字，用来把米画师等页面的约稿信息填进稿仓的录入表单。只在点悬浮球时读取一次，不监听输入、不上传任何内容。</string>
+</resources>

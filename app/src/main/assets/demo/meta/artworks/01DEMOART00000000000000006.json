@@ -1,0 +1,36 @@
+{
+  "id": "01DEMOART00000000000000006",
+  "title": "待整理草图示例",
+  "note": "未分文件夹且未填价格，用于展示「待整理」筛选",
+  "kind": "artwork",
+  "source_art_id": null,
+  "world_id": "w_1",
+  "folder_id": null,
+  "character_ids": [
+    "c_2"
+  ],
+  "tag_ids": [],
+  "artist_id": "a_1",
+  "self_made": false,
+  "received_at": "2026-05-08",
+  "received_at_guessed": false,
+  "price_total": null,
+  "currency": "CNY",
+  "platform": "",
+  "created_at": "2026-11-22T00:00:00+08:00",
+  "updated_at": "2026-11-22T00:00:00+08:00",
+  "rev": 1,
+  "versions": [
+    {
+      "id": "01DEMOVER05000000000000000",
+      "blob": "6b256c336add1cd9f9c1b8d04f33f977fa5d2748f88aad8181e4cabb7fa9fe7d",
+      "label": "草图",
+      "ext": "webp",
+      "w": 480,
+      "h": 600,
+      "has_alpha": false,
+      "is_primary": true,
+      "sort": 0
+    }
+  ]
+}

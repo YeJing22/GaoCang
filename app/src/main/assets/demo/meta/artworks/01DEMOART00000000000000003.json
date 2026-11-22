@@ -1,0 +1,38 @@
+{
+  "id": "01DEMOART00000000000000003",
+  "title": "单人普通稿示例",
+  "note": "",
+  "kind": "artwork",
+  "source_art_id": null,
+  "world_id": "w_2",
+  "folder_id": "f_1",
+  "character_ids": [
+    "c_4"
+  ],
+  "tag_ids": [
+    "t_half"
+  ],
+  "artist_id": "a_2",
+  "self_made": false,
+  "received_at": "2026-08-12 11:30:00",
+  "received_at_guessed": false,
+  "price_total": 420,
+  "currency": "CNY",
+  "platform": "示例平台",
+  "created_at": "2026-11-22T00:00:00+08:00",
+  "updated_at": "2026-11-22T00:00:00+08:00",
+  "rev": 1,
+  "versions": [
+    {
+      "id": "01DEMOVER02000000000000000",
+      "blob": "3152b7a2a0810b2c76cd1f10eea51dd3fd4ea669ce328ccf733bf6e4c0457925",
+      "label": "成图",
+      "ext": "webp",
+      "w": 480,
+      "h": 600,
+      "has_alpha": false,
+      "is_primary": true,
+      "sort": 0
+    }
+  ]
+}

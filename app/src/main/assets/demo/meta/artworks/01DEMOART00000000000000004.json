@@ -1,0 +1,38 @@
+{
+  "id": "01DEMOART00000000000000004",
+  "title": "仅宠物单图示例",
+  "note": "仅挂附属角色的稿件，分摊兜底归入该角色",
+  "kind": "artwork",
+  "source_art_id": null,
+  "world_id": "w_1",
+  "folder_id": "f_2",
+  "character_ids": [
+    "c_3"
+  ],
+  "tag_ids": [
+    "t_chibi"
+  ],
+  "artist_id": "a_2",
+  "self_made": false,
+  "received_at": "2026-07-03 21:15:00",
+  "received_at_guessed": false,
+  "price_total": 160,
+  "currency": "CNY",
+  "platform": "示例平台",
+  "created_at": "2026-11-22T00:00:00+08:00",
+  "updated_at": "2026-11-22T00:00:00+08:00",
+  "rev": 1,
+  "versions": [
+    {
+      "id": "01DEMOVER03000000000000000",
+      "blob": "31eafb0ecdf1e947643ad2ac097fd8b5bfa31fe4f991e82bdd9c6aa4517917b6",
+      "label": "成图",
+      "ext": "webp",
+      "w": 512,
+      "h": 512,
+      "has_alpha": false,
+      "is_primary": true,
+      "sort": 0
+    }
+  ]
+}

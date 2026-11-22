@@ -1,0 +1,38 @@
+{
+  "id": "01DEMOART00000000000000007",
+  "title": "制品实物示例",
+  "note": "关联原稿的二次创作制品（继承原稿画师/角色/世界观，不计入账本）",
+  "kind": "derived",
+  "source_art_id": "01DEMOART00000000000000001",
+  "world_id": "w_1",
+  "folder_id": "sys_derived",
+  "character_ids": [
+    "c_1"
+  ],
+  "tag_ids": [
+    "t_scene"
+  ],
+  "artist_id": null,
+  "self_made": false,
+  "received_at": "2026-10-25 10:00:00",
+  "received_at_guessed": false,
+  "price_total": null,
+  "currency": "CNY",
+  "platform": "",
+  "created_at": "2026-11-22T00:00:00+08:00",
+  "updated_at": "2026-11-22T00:00:00+08:00",
+  "rev": 1,
+  "versions": [
+    {
+      "id": "01DEMOVER06000000000000000",
+      "blob": "90947330cc6b3cebbc568ce33ed725c603dd951c46d8a1062f79229e16f61064",
+      "label": "实物图",
+      "ext": "webp",
+      "w": 512,
+      "h": 512,
+      "has_alpha": false,
+      "is_primary": true,
+      "sort": 0
+    }
+  ]
+}

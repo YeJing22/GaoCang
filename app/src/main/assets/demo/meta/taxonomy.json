@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "worlds": [
+    {
+      "id": "w_1",
+      "name": "世界观1"
+    },
+    {
+      "id": "w_2",
+      "name": "世界观2"
+    }
+  ],
+  "characters": [
+    {
+      "id": "c_1",
+      "name": "角色1",
+      "world_id": "w_1"
+    },
+    {
+      "id": "c_2",
+      "name": "角色2",
+      "world_id": "w_1"
+    },
+    {
+      "id": "c_3",
+      "name": "角色3(宠物)",
+      "world_id": "w_1",
+      "pet": true
+    },
+    {
+      "id": "c_4",
+      "name": "角色4",
+      "world_id": "w_2"
+    }
+  ]
+}

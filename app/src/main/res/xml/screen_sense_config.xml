@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  屏幕取字（无障碍）配置。
+
+  两个字段是有意这么写的：
+  - canRetrieveWindowContent=true：不打开它，rootInActiveWindow 恒为 null，什么都读不到。
+  - flagIncludeNotImportantViews：米画师这类页面的价格/日期经常挂在"对无障碍不重要"的节点上
+    （装饰性 TextView），不加这个 flag 会漏字段，而漏一个价格就白费一次。
+  - canPerformGestures=true：留给下一步「翻到订单详情」用，现在没用上，但改了要重新授权，一起开。
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagIncludeNotImportantViews|flagReportViewIds"
+    android:canPerformGestures="true"
+    android:canRetrieveWindowContent="true"
+    android:description="@string/sense_desc"
+    android:notificationTimeout="100" />

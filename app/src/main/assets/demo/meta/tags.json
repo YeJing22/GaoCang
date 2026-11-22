@@ -1,0 +1,24 @@
+{
+  "tags": [
+    {
+      "id": "t_half",
+      "name": "半身",
+      "aliases": []
+    },
+    {
+      "id": "t_duo",
+      "name": "双人",
+      "aliases": []
+    },
+    {
+      "id": "t_scene",
+      "name": "插图",
+      "aliases": []
+    },
+    {
+      "id": "t_chibi",
+      "name": "Q版",
+      "aliases": []
+    }
+  ]
+}

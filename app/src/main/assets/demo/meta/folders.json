@@ -1,0 +1,22 @@
+{
+  "folders": [
+    {
+      "id": "f_1",
+      "name": "文件夹1"
+    },
+    {
+      "id": "f_2",
+      "name": "文件夹2"
+    },
+    {
+      "id": "sys_derived",
+      "name": "制品",
+      "system": "derived"
+    },
+    {
+      "id": "sys_fill",
+      "name": "制图",
+      "system": "fill"
+    }
+  ]
+}

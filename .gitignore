@@ -1,0 +1,30 @@
+# 构建产物
+.gradle/
+build/
+app/build/
+dist/
+.kotlin/
+
+# 本地环境（含 SDK 路径，不该共享）
+local.properties
+
+# APK 是大文件，不进仓库；backup/ 下的源码备份保留
+*.apk
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# tools 的输出（manifest / 报告，可重新生成）
+report/
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 临时截图（adb screencap 产物）
+.tmp/
+
+# 项目工作记忆（本地文档，不进仓库）
+.workbuddy/
