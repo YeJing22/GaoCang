@@ -339,7 +339,7 @@ fun ArtCard(
                 .clip(shape)
                 .background(
                     Brush.linearGradient(
-                        listOf(Color(0xFF141A24), Color(0xFF0E1319)),
+                        listOf(CHigh, CardBg),
                     )
                 )
                 .border(

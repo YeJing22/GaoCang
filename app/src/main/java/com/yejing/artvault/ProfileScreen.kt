@@ -82,6 +82,8 @@ fun ProfileScreen(
     names: VaultNames? = null,
     petLabel: String = "附属",
     onPetLabel: (String) -> Unit = {},
+    themePreset: ThemePreset = ThemePreset.AmberNight,
+    onThemePreset: (ThemePreset) -> Unit = {},
 ) {
     val ctx = LocalContext.current
     val clip = androidx.compose.ui.platform.LocalClipboardManager.current
@@ -91,6 +93,7 @@ fun ProfileScreen(
     var showPurge by remember { mutableStateOf(false) }
     var showPurgeDelete by remember { mutableStateOf(false) }
     var showPetLabel by remember { mutableStateOf(false) }
+    var showThemePicker by remember { mutableStateOf(false) }
     var showPrivacy by remember { mutableStateOf(false) }
     var showLicenses by remember { mutableStateOf(false) }
     var crashText by remember { mutableStateOf<String?>(null) }
@@ -217,6 +220,13 @@ fun ProfileScreen(
                     .background(CardBg)
                     .padding(horizontal = 16.dp, vertical = 4.dp),
             ) {
+                SettingRow(
+                    "主题配色",
+                    trailing = { ValuePill("${themePreset.label} ›") },
+                    sub = "2 套深色 + 2 套浅色，切换后立即生效",
+                    onClick = { showThemePicker = true },
+                )
+                HairLine(color = OutlineSoft)
                 SettingRow(
                     "附属角色标签",
                     trailing = { ValuePill("$petLabel ›") },
@@ -446,6 +456,67 @@ fun ProfileScreen(
             }
 
         }
+    }
+
+    if (showThemePicker) {
+        AlertDialog(
+            onDismissRequest = { showThemePicker = false },
+            containerColor = CardBg,
+            shape = RoundedCornerShape(24.dp),
+            title = { Text("主题配色", style = T.titleSm, color = Paper) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(Space.s)) {
+                    ThemePreset.entries.forEach { preset ->
+                        val active = preset == themePreset
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (active) AccentC else CHigh)
+                                .clickable {
+                                    onThemePreset(preset)
+                                    showThemePicker = false
+                                }
+                                .padding(horizontal = 12.dp, vertical = 11.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(
+                                Modifier
+                                    .size(22.dp)
+                                    .clip(CircleShape)
+                                    .background(preset.palette.ink),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Box(
+                                    Modifier
+                                        .size(10.dp)
+                                        .clip(CircleShape)
+                                        .background(preset.palette.accent),
+                                )
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    preset.label,
+                                    style = T.bodySm,
+                                    color = if (active) Accent else Paper,
+                                    fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
+                                )
+                                Text(preset.sub, style = T.micro, color = Muted)
+                            }
+                            if (active) {
+                                Text("当前", style = T.micro, color = Accent, fontWeight = FontWeight.Medium)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showThemePicker = false }) {
+                    Text("关闭", style = T.body, color = Muted)
+                }
+            },
+        )
     }
 
     if (showPetLabel) {

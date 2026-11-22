@@ -8,8 +8,7 @@ import androidx.compose.ui.graphics.Color
 
 /**
  * 完整主题色板契约。
- * 所有顶层色值 token（`Ui.kt`）均由此派生，后续新增预设主题只需在 [ThemePreset] 中追加条目，
- * 无需改动业务页面的调用点。
+ * 所有顶层色值 token（`Ui.kt`）均由此派生，切换 [ThemePreset] 时全应用自动重组。
  */
 data class ThemePalette(
     val isDark: Boolean,
@@ -43,17 +42,18 @@ data class ThemePalette(
 )
 
 /**
- * 预设主题枚举。
- * 下个大版本开放切换入口时，直接在这里扩展更多预设并在「我的 → 偏好与工具」提供选择器即可。
+ * 4 套预设主题（2 套深色 + 2 套浅色）。
  */
 enum class ThemePreset(
     val id: String,
     val label: String,
+    val sub: String,
     val palette: ThemePalette,
 ) {
     AmberNight(
         id = "amber_night",
         label = "夜色琥珀",
+        sub = "深色 · 深蓝墨底 + 暖琥珀",
         palette = ThemePalette(
             isDark = true,
             ink = Color(0xFF090B10),
@@ -87,12 +87,151 @@ enum class ThemePreset(
                 1f to Color.White.copy(alpha = 0.045f),
             ),
             chartColors = listOf(
-                Color(0xFFF2B45E), // 琥珀
-                Color(0xFF5BC8A8), // 薄荷
-                Color(0xFF6E8FE0), // 冷蓝
-                Color(0xFF8A93A8), // 灰蓝
-                Color(0xFFC98F6A), // 陶土
-                Color(0xFF6FB3C0), // 灰青
+                Color(0xFFF2B45E),
+                Color(0xFF5BC8A8),
+                Color(0xFF6E8FE0),
+                Color(0xFF8A93A8),
+                Color(0xFFC98F6A),
+                Color(0xFF6FB3C0),
+            ),
+        ),
+    ),
+
+    SlateBlue(
+        id = "slate_blue",
+        label = "暮岚灰蓝",
+        sub = "深色 · 柔和灰蓝底 + 雾灰蓝",
+        palette = ThemePalette(
+            isDark = true,
+            ink = Color(0xFF0B0E14),
+            cardBg = Color(0xFF131822),
+            cHigh = Color(0xFF1B2230),
+            outline = Color(0xFF273142),
+            outlineSoft = Color(0xFF1A212E),
+            paper = Color(0xFFEAEFF6),
+            onMid = Color(0xFF9AA6BA),
+            muted = Color(0xFF636F84),
+            accent = Color(0xFF7FA3D4),
+            accentC = Color(0xFF1A2434),
+            accentC2 = Color(0xFF2D3D56),
+            onAccent = Color(0xFF0D1522),
+            lilac = Color(0xFFB0A6FF),
+            mint = Color(0xFF63BFA4),
+            mintC = Color(0x1F63BFA4),
+            warn = Color(0xFFE38E8E),
+            warnC = Color(0x1FE38E8E),
+            amber = Color(0xFFDFB374),
+            amberC = Color(0x1ADFB374),
+            ink60 = Color(0x990B0E14),
+            ink50 = Color(0x800B0E14),
+            grip = Color(0xFF2F3A4D),
+            scrim = Color(0xCC05070B),
+            panelVeil = Color(0x4D0B0E14),
+            paper70 = Color(0xB3EAEFF6),
+            rimBrush = Brush.verticalGradient(
+                0f to Color.White.copy(alpha = 0.08f),
+                0.5f to Color.White.copy(alpha = 0.028f),
+                1f to Color.White.copy(alpha = 0.045f),
+            ),
+            chartColors = listOf(
+                Color(0xFF7FA3D4),
+                Color(0xFF63BFA4),
+                Color(0xFFDFB374),
+                Color(0xFF8B98B0),
+                Color(0xFFC28E7A),
+                Color(0xFF6EA8B8),
+            ),
+        ),
+    ),
+
+    WarmPaper(
+        id = "warm_paper",
+        label = "宣纸暖砂",
+        sub = "浅色 · 宣纸米白底 + 焦糖琥珀",
+        palette = ThemePalette(
+            isDark = false,
+            ink = Color(0xFFF6F3EE),
+            cardBg = Color(0xFFFFFFFF),
+            cHigh = Color(0xFFEDE8DF),
+            outline = Color(0xFFDFD8CC),
+            outlineSoft = Color(0xFFEAE4DA),
+            paper = Color(0xFF1F1C18),
+            onMid = Color(0xFF5B544B),
+            muted = Color(0xFF8E8579),
+            accent = Color(0xFFC97A24),
+            accentC = Color(0xFFF9ECDC),
+            accentC2 = Color(0xFFEBD0AE),
+            onAccent = Color(0xFFFFFFFF),
+            lilac = Color(0xFF7466D8),
+            mint = Color(0xFF258F70),
+            mintC = Color(0x1F258F70),
+            warn = Color(0xFFD14D4D),
+            warnC = Color(0x1CD14D4D),
+            amber = Color(0xFFB86B1A),
+            amberC = Color(0x1AB86B1A),
+            ink60 = Color(0x99191612),
+            ink50 = Color(0x80191612),
+            grip = Color(0xFFD2C9BC),
+            scrim = Color(0x73181410),
+            panelVeil = Color(0x66191612),
+            paper70 = Color(0xB31F1C18),
+            rimBrush = Brush.verticalGradient(
+                0f to Color.Black.copy(alpha = 0.05f),
+                1f to Color.Black.copy(alpha = 0.08f),
+            ),
+            chartColors = listOf(
+                Color(0xFFC97A24),
+                Color(0xFF258F70),
+                Color(0xFF5A7BC8),
+                Color(0xFF8A8075),
+                Color(0xFFB86F52),
+                Color(0xFF4F93A0),
+            ),
+        ),
+    ),
+
+    MistBlue(
+        id = "mist_blue",
+        label = "晴岚雾蓝",
+        sub = "浅色 · 雾灰白底 + 晴岚靛蓝",
+        palette = ThemePalette(
+            isDark = false,
+            ink = Color(0xFFF2F5FA),
+            cardBg = Color(0xFFFFFFFF),
+            cHigh = Color(0xFFE7EDF6),
+            outline = Color(0xFFD6DFEC),
+            outlineSoft = Color(0xFFE5ECF5),
+            paper = Color(0xFF172030),
+            onMid = Color(0xFF526076),
+            muted = Color(0xFF8391A6),
+            accent = Color(0xFF4466E8),
+            accentC = Color(0xFFE7EDFE),
+            accentC2 = Color(0xFFC5D2FA),
+            onAccent = Color(0xFFFFFFFF),
+            lilac = Color(0xFF7466D8),
+            mint = Color(0xFF1C9674),
+            mintC = Color(0x1F1C9674),
+            warn = Color(0xFFD44B56),
+            warnC = Color(0x1CD44B56),
+            amber = Color(0xFFC47A1E),
+            amberC = Color(0x1AC47A1E),
+            ink60 = Color(0x94141C2A),
+            ink50 = Color(0x80141C2A),
+            grip = Color(0xFFC5D0E0),
+            scrim = Color(0x73101824),
+            panelVeil = Color(0x66141C2A),
+            paper70 = Color(0xB3172030),
+            rimBrush = Brush.verticalGradient(
+                0f to Color.Black.copy(alpha = 0.05f),
+                1f to Color.Black.copy(alpha = 0.08f),
+            ),
+            chartColors = listOf(
+                Color(0xFF4466E8),
+                Color(0xFF1C9674),
+                Color(0xFFC47A1E),
+                Color(0xFF74849C),
+                Color(0xFFBE7268),
+                Color(0xFF4A98B0),
             ),
         ),
     ),

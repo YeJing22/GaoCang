@@ -300,9 +300,14 @@ class CoreDataTest {
     fun `themePreset falls back safely and drives top-level tokens`() {
         assertEquals(ThemePreset.AmberNight, ThemePreset.fromId(null))
         assertEquals(ThemePreset.AmberNight, ThemePreset.fromId("unknown_id"))
+        assertEquals(4, ThemePreset.entries.size)
+        ThemePreset.entries.forEach { p ->
+            assertEquals(p, ThemePreset.fromId(p.id))
+            ThemeState.apply(p.id)
+            assertEquals(p.palette.accent, Accent)
+            assertEquals(p.palette.ink, Ink)
+        }
         ThemeState.apply(ThemePreset.AmberNight.id)
-        assertEquals(ThemePreset.AmberNight.palette.accent, Accent)
-        assertEquals(ThemePreset.AmberNight.palette.ink, Ink)
     }
 
     @Test

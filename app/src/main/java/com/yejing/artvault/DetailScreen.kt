@@ -89,13 +89,16 @@ internal fun bgName(b: BgMode) = when (b) {
 
 @Composable
 internal fun CheckerBoard(cell: Dp = 12.dp) {
+    val dark = ThemeState.palette.isDark
+    val c1 = if (dark) Color(0xFF161C26) else Color(0xFFEBE7E0)
+    val c2 = if (dark) Color(0xFF11161E) else Color(0xFFF5F2EC)
     Canvas(Modifier.fillMaxSize()) {
         val s = cell.toPx()
         val cols = (size.width / s).toInt() + 1
         val rows = (size.height / s).toInt() + 1
         for (r in 0 until rows) {
             for (c in 0 until cols) {
-                val color = if ((r + c) % 2 == 0) Color(0xFF161C26) else Color(0xFF11161E)
+                val color = if ((r + c) % 2 == 0) c1 else c2
                 drawRect(color, Offset(c * s, r * s), Size(s, s))
             }
         }
@@ -305,6 +308,10 @@ fun DetailScreen(
                     )
                 )
         )
+        // 顶栏压在深色渐变遮罩上，文字/图标恒定浅色，避免浅色主题下变暗看不清
+        val barInk = Color(0xFFEEF0F6)
+        val barInk70 = Color(0xB3EEF0F6)
+        val barVeil = Color(0x4D090B10)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -315,8 +322,8 @@ fun DetailScreen(
             RoundIconButton(
                 icon = GI.Back,
                 onClick = onClose,
-                background = PanelVeil,
-                tint = Paper,
+                background = barVeil,
+                tint = barInk,
                 size = 36.dp,
                 iconSize = 18.dp,
             )
@@ -324,7 +331,7 @@ fun DetailScreen(
             Text(
                 "${pager.currentPage + 1} / ${arts.size}",
                 style = T.numLg,
-                color = Paper70,
+                color = barInk70,
             )
             Spacer(Modifier.width(10.dp))
             // 只读的条件提示：现在看的是「筛过的 1765 件」还是「全库」。
@@ -334,13 +341,13 @@ fun DetailScreen(
                 Modifier
                     .widthIn(max = 168.dp)
                     .clip(RoundedCornerShape(50))
-                    .background(PanelVeil)
+                    .background(barVeil)
                     .padding(horizontal = 10.dp, vertical = 4.dp),
             ) {
                 Text(
                     rangeLabel ?: if (filter.isEmpty) "筛选: 全部稿件" else "筛选: ${filter.condCount} 项",
                     style = T.micro,
-                    color = Paper70,
+                    color = barInk70,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -375,8 +382,8 @@ fun DetailScreen(
                         }
                     }
                 },
-                background = if (cur?.starred == true) Amber.copy(alpha = 0.18f) else PanelVeil,
-                tint = if (cur?.starred == true) Amber else Paper,
+                background = if (cur?.starred == true) Amber.copy(alpha = 0.22f) else barVeil,
+                tint = if (cur?.starred == true) Amber else barInk,
                 size = 36.dp,
                 iconSize = 17.dp,
                 filled = cur?.starred == true,
@@ -391,8 +398,8 @@ fun DetailScreen(
                         viewer = a.id to i
                     }
                 },
-                background = PanelVeil,
-                tint = Paper,
+                background = barVeil,
+                tint = barInk,
                 size = 36.dp,
                 iconSize = 17.dp,
             )

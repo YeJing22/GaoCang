@@ -213,6 +213,19 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
         )
         setContent {
+            // 随浅色/深色主题同步切换状态栏与导航栏图标明暗，避免浅色背景下状态栏白字看不清
+            val isDark = ThemeState.palette.isDark
+            LaunchedEffect(isDark) {
+                val style = if (isDark) {
+                    SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+                } else {
+                    SystemBarStyle.light(
+                        android.graphics.Color.TRANSPARENT,
+                        android.graphics.Color.TRANSPARENT,
+                    )
+                }
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+            }
             // 全Compose 树共用一个注册了 GifDecoder 的 loader：网格仍吃缩略图（静态首帧），
             // 只有详情页取原图时才会走动图解码 —— 别把网格也切到原图，1813 件同时解动图会卡死。
             // Coil 2.x 没有 setSingletonImageLoaderFactory（那是 3.x 的 API），用 CompositionLocal 最省事。
@@ -942,6 +955,11 @@ private fun Root() {
                     onPetLabel = {
                         petLabel = it
                         prefs.petLabel = it
+                    },
+                    themePreset = ThemeState.preset,
+                    onThemePreset = {
+                        ThemeState.preset = it
+                        prefs.themePreset = it.id
                     },
                     onSyncMirror = {
                         if (s.root != null && !mirrorBusy) {
