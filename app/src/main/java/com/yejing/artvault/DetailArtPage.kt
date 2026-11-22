@@ -551,27 +551,41 @@ private fun FileChip(v: Ver?, lib: Library, modifier: Modifier = Modifier) {
         if (sizeText.isNotBlank()) add(sizeText)
     }
     if (parts.isEmpty()) return
+    val isDark = ThemeState.palette.isDark
     Text(
         parts.joinToString(" · "),
         style = T.num,
         color = Paper,
         modifier = modifier
-            .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(50))
+            .background(
+                if (isDark) Color.Black.copy(alpha = 0.55f) else CardBg.copy(alpha = 0.88f),
+                RoundedCornerShape(50),
+            )
+            .then(
+                if (isDark) Modifier else Modifier.border(0.8.dp, Outline, RoundedCornerShape(50))
+            )
             .padding(horizontal = 10.dp, vertical = 5.dp),
     )
 }
 
 /**
- * 图内右下角的底衬切换。三个选项挤在一颗胶囊里，选中项用实心 Paper。
+ * 图内右下角的底衬切换。三个选项挤在一颗胶囊里，选中项用实心反色。
  *
  * 为什么能浮在图上：它在手势层之后声明（上层），且尺寸只有内容那么大，
  * 所以既收得到点击，也不会把整块图区的点击/翻页吃掉。
  */
 @Composable
 private fun BgSwitchCompact(bg: BgMode, onChange: (BgMode) -> Unit, modifier: Modifier = Modifier) {
+    val isDark = ThemeState.palette.isDark
     Row(
         modifier
-            .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(50))
+            .background(
+                if (isDark) Color.Black.copy(alpha = 0.55f) else CardBg.copy(alpha = 0.88f),
+                RoundedCornerShape(50),
+            )
+            .then(
+                if (isDark) Modifier else Modifier.border(0.8.dp, Outline, RoundedCornerShape(50))
+            )
             .padding(2.dp),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
@@ -580,10 +594,21 @@ private fun BgSwitchCompact(bg: BgMode, onChange: (BgMode) -> Unit, modifier: Mo
             Text(
                 bgName(m),
                 style = T.micro,
-                color = if (on) Ink else Paper.copy(alpha = 0.8f),
+                color = when {
+                    on && isDark -> Ink
+                    on -> OnAccent
+                    isDark -> Paper.copy(alpha = 0.8f)
+                    else -> OnMid
+                },
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(if (on) Paper else Color.Transparent)
+                    .background(
+                        when {
+                            on && isDark -> Paper
+                            on -> Accent
+                            else -> Color.Transparent
+                        }
+                    )
                     .clickable { onChange(m) }
                     .padding(horizontal = 10.dp, vertical = 6.dp),
             )

@@ -2,17 +2,21 @@ package com.yejing.artvault
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -72,7 +76,7 @@ fun BusyOverlay(
         if (state == null) {
             shown = false
         } else {
-            delay(400)
+            delay(300)
             shown = true
         }
     }
@@ -83,7 +87,7 @@ fun BusyOverlay(
     Box(
         Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.6f))
+            .background(Scrim)
             // 铺满整屏并吞掉触摸：底下就是网格，点穿会误触到别的稿件
             .pointerInput(Unit) { detectTapGestures { } },
         contentAlignment = Alignment.Center,
@@ -93,11 +97,22 @@ fun BusyOverlay(
                 .width(268.dp)
                 .clip(RoundedCornerShape(14.dp))
                 .background(CHigh)
+                .border(1.dp, Outline, RoundedCornerShape(14.dp))
                 .padding(horizontal = 20.dp, vertical = 18.dp),
         ) {
-            Text(cur.title, style = T.titleSm, color = Paper)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    color = Accent,
+                    trackColor = CardBg,
+                    strokeWidth = 2.dp,
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(cur.title, style = T.titleSm, color = Paper)
+            }
             Spacer(Modifier.height(14.dp))
             if (cur.total > 0) {
+                val pct = ((cur.done.toFloat() / cur.total).coerceIn(0f, 1f) * 100).toInt()
                 LinearProgressIndicator(
                     progress = { (cur.done.toFloat() / cur.total).coerceIn(0f, 1f) },
                     modifier = Modifier.fillMaxWidth(),
@@ -105,7 +120,10 @@ fun BusyOverlay(
                     trackColor = CardBg,
                 )
                 Spacer(Modifier.height(10.dp))
-                Text("${cur.done} / ${cur.total}", style = T.numLg, color = Muted)
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text("${cur.done} / ${cur.total}", style = T.numLg, color = Muted, modifier = Modifier.weight(1f))
+                    Text("$pct%", style = T.num, color = Accent)
+                }
             } else {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth(),

@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import coil.compose.LocalImageLoader
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -1278,9 +1279,9 @@ private fun Root() {
                                             s.tags,
                                             s.tax,
                                         ) { done, t ->
-                                            // 每 10 件刷一次（含最后一件）：300 件不必每件都写一次状态
-                                            if (done % 10 == 0 || done == t) {
-                                                busy = Busy("正在赋值", done, t)
+                                            val step = if (t <= 30) 1 else 5
+                                            if (done % step == 0 || done == t) {
+                                                scope.launch { busy = Busy("正在赋值", done, t) }
                                             }
                                         }
                                     }
@@ -1320,10 +1321,21 @@ private fun Root() {
                             toast(ctx, "演示库不能改")
                         } else {
                             scope.launch {
+                                val total = tg.size
+                                busy = Busy("正在合并", 0, total)
                                 // 合并也不记历史：被并掉的槽在回收站里（带「合并」标签），
                                 // 想把它们放回来就去那儿；历史只负责"内容改错了"
-                                val r = withContext(Dispatchers.IO) {
-                                    mergeArts(root, tg.map { it.id }, pid, s.tax)
+                                val r = try {
+                                    withContext(Dispatchers.IO) {
+                                        mergeArts(root, tg.map { it.id }, pid, s.tax) { done, t ->
+                                            val step = if (t <= 30) 1 else 5
+                                            if (done % step == 0 || done == t) {
+                                                scope.launch { busy = Busy("正在合并", done, t) }
+                                            }
+                                        }
+                                    }
+                                } finally {
+                                    busy = null
                                 }
                                 toast(
                                     ctx,
@@ -1944,7 +1956,8 @@ private fun Root() {
                     Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(CHigh),
+                        .background(CHigh)
+                        .border(1.dp, Outline, RoundedCornerShape(12.dp)),
                 ) {
                     Row(
                         Modifier
@@ -1969,10 +1982,15 @@ private fun Root() {
                                     val r = s?.root ?: return@clickable
                                     val targetId = u.opId
                                     scope.launch {
+                                        busy = Busy("正在撤销")
                                         // 校验 + 撤销在同一把锁里（undoIfLatest）：分两步做的话，
                                         // 中间那几毫秒插进别的操作，就会「撤了另一条，用户以为在重做」
-                                        val rec = withContext(Dispatchers.IO) {
-                                            OperationJournal.undoIfLatest(r, targetId)
+                                        val rec = try {
+                                            withContext(Dispatchers.IO) {
+                                                OperationJournal.undoIfLatest(r, targetId)
+                                            }
+                                        } finally {
+                                            busy = null
                                         }
                                         undoBar = null
                                         if (rec == null) {

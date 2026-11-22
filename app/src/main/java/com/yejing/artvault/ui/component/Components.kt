@@ -68,6 +68,7 @@ import com.yejing.artvault.Outline
 import com.yejing.artvault.Paper
 import com.yejing.artvault.RimBrush
 import com.yejing.artvault.T
+import com.yejing.artvault.ThemeState
 
 /** 胶囊 chip。选中 = 主色文字 + 主色容器，不再用实心亮块压眼。 */
 @Composable
@@ -360,6 +361,9 @@ fun ArtCard(
                     modifier = Modifier.fillMaxSize(),
                 )
             }
+            val isDark = ThemeState.palette.isDark
+            val badgeBg = if (isDark) Ink60 else CardBg.copy(alpha = 0.88f)
+            val badgeBorder = if (isDark) Color.White.copy(alpha = 0.12f) else Outline
             if (v?.hasAlpha == true && !selecting) {
                 Box(
                     Modifier
@@ -368,7 +372,7 @@ fun ArtCard(
                         .size(7.dp)
                         .clip(CircleShape)
                         .background(Mint)
-                        .border(2.dp, Ink60, CircleShape),
+                        .border(2.dp, if (isDark) Ink60 else CardBg.copy(alpha = 0.9f), CircleShape),
                 )
             }
             if (art.versions.size > 1) {
@@ -376,13 +380,13 @@ fun ArtCard(
                     "${art.versions.size}",
                     style = T.micro,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.White,
+                    color = if (isDark) Color.White else Paper,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(6.dp)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(Ink60)
-                        .border(0.5.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
+                        .background(badgeBg)
+                        .border(if (isDark) 0.5.dp else 0.8.dp, badgeBorder, RoundedCornerShape(6.dp))
                         .padding(horizontal = 6.dp, vertical = 1.dp),
                 )
             }
@@ -393,8 +397,8 @@ fun ArtCard(
                         .padding(7.dp)
                         .size(14.dp)
                         .clip(CircleShape)
-                        .background(Ink60)
-                        .border(0.5.dp, Color.White.copy(alpha = 0.12f), CircleShape),
+                        .background(badgeBg)
+                        .border(if (isDark) 0.5.dp else 0.8.dp, badgeBorder, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     GIcon(GI.Star, Amber, size = 9.dp, filled = true)

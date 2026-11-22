@@ -496,6 +496,7 @@ object ArtworkCommands {
         ids: List<String>,
         primaryId: String,
         tax: Taxonomy? = null,
+        onProgress: (done: Int, total: Int) -> Unit = { _, _ -> },
     ): MergeResult = withContext(Dispatchers.IO) {
         if (ids.size < 2) return@withContext MergeResult(false, error = "至少选两件")
         val files = ids.associateWith { File(dir(root), "$it.json") }
@@ -545,19 +546,21 @@ object ArtworkCommands {
             if (!commit(root, primary, target, tax)) {
                 return@withContext MergeResult(false, error = "主槽写盘失败，其他槽都没动")
             }
+            onProgress(1, ids.size)
 
             val trash = File(dir(root), ".trash").apply { mkdirs() }
             val others = ids.filter { it != primary }
             val done = ArrayList<Pair<File, File>>()
             var moved = 0
             var moveFailed = 0
-            others.forEach { id ->
+            others.forEachIndexed { idx, id ->
                 val src = File(dir(root), "$id.json")
                 // 回收站里已有同名（之前删/合并过一次）就加时间戳，不覆盖上一份
                 var dst = File(trash, "$id.json")
                 if (dst.exists()) dst = File(trash, "$id.${System.currentTimeMillis()}.json")
                 // 走 moveToTrash：移走这件事要记进操作日志，否则撤销合并时原槽回不来
                 val ok = moveToTrash(src, dst)
+                onProgress(idx + 2, ids.size)
                 if (ok) {
                     done += src to dst
                     moved++

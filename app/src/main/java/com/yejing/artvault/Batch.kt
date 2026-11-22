@@ -77,7 +77,8 @@ suspend fun mergeArts(
     ids: List<String>,
     primaryId: String,
     tax: Taxonomy? = null,
-): MergeResult = ArtworkCommands.merge(root, ids, primaryId, tax)
+    onProgress: (done: Int, total: Int) -> Unit = { _, _ -> },
+): MergeResult = ArtworkCommands.merge(root, ids, primaryId, tax, onProgress)
 
 /** 删除整槽：JSON 进回收站，图片永不动 */
 suspend fun deleteArts(
