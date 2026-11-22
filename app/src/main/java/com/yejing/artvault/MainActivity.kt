@@ -452,8 +452,10 @@ private fun Root() {
     }
 
     // 详情页开着哪张稿：在稿仓里点悬浮球 = 记住这一张（先指目标，再去米画师取）
-    LaunchedEffect(linkedArtId, detailId) {
-        SenseHandoff.uiArtId = linkedArtId ?: detailId
+    // 打开编辑页时清空 uiArtId，避免抓完回编辑页时悬浮球错回「记」
+    LaunchedEffect(editId, linkedArtId, roleOpenId, artistOpenId, folderOpenId, detailId) {
+        SenseHandoff.uiArtId = if (editId != null) null
+        else (linkedArtId ?: roleOpenId ?: artistOpenId ?: folderOpenId ?: detailId)
     }
 
     // 操作完成后 4 秒底部撤销条：统一挂在 OperationJournal.onDone，不漏调用点，无实际变更不触发
@@ -759,11 +761,15 @@ private fun Root() {
         // 文案在这里算，画由 BrowseScreen 负责 —— 以前是 `align(TopCenter)` 的浮层，
         // 和「稿库」大标题叠在一起；现在排在标题下方、随内容下移。
         val curPick = pickArt
+        LaunchedEffect(curPick, senseApply) {
+            if (curPick?.mode == PickArt.Mode.Apply && senseApply == null) {
+                pickArt = null
+                senseApply = null
+            }
+        }
         val pickHint = if (curPick != null && !detailOpen && !selecting && !showMedia && picked == null && editId == null) {
             when (curPick.mode) {
-                PickArt.Mode.Apply -> senseApply?.let {
-                    "点一张稿，套用「${it.source}」的 ${it.hitCount} 项"
-                } ?: "点一张稿套用识别结果"
+                PickArt.Mode.Apply -> if (senseApply != null) "点击想要录入的稿件" else null
                 PickArt.Mode.Link -> "点一张稿作为它的原稿"
                 PickArt.Mode.AdoptDerived -> {
                     val srcTitle = s?.arts?.firstOrNull { it.id == curPick.artId }?.title?.ifBlank { "未命名" } ?: "原稿"
@@ -1596,8 +1602,8 @@ private fun Root() {
                         buildString {
                             append("标题  ${ask.title ?: "—"}\n")
                             append("画师  ${ask.artist ?: "—"}\n")
-                            append("稿酬  ${ask.price?.let { "¥$it" } ?: "—"}\n")
-                            append("上传  ${ask.receivedAt ?: "—"}")
+                            append("价格  ${ask.price?.let { "¥$it" } ?: "—"}\n")
+                            append("时间  ${ask.receivedAt ?: "—"}")
                         },
                         style = T.bodySm,
                         color = Paper70,

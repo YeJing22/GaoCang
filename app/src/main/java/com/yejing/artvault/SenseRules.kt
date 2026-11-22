@@ -9,13 +9,11 @@ import kotlin.math.roundToLong
  * 刻意做成**纯函数**：输入是一屏的节点列表，输出是一份 [SenseDraft]（全是建议值）。
  * 不碰 Compose、不碰 Context、不碰 IO —— 给一段 JSON 就能在 JVM 上断言，不用连真机。
  *
- * 认两种屏（都是由用户点一次悬浮球抓下来的那一屏）：
+ * 识别范围（由用户点一次悬浮球抓下来的那一屏）：
  * - **米画师 · 稿件详情**（`com.qixin.mihuas`）：原生控件，每行都有稳定的 `viewIdResourceName`
  *   （`detailMenuPriceNum` 等），主路径按 **id** 取；标签 + 同行取值只作兜底（改 id 不改标签）。
- * - **画加 · 订单快照**（`com.netease.huajia`）：**一个 id 都没有**（抓下来全是空串），
- *   只能靠「标签 → 同行右侧」和「标题紧挨着价格上方」这类几何关系取。
  *
- * 两者都只读当前这一屏，不翻页、不监听；认不出就返回 null，让界面说「没认出」而不是瞎填。
+ * 只读当前这一屏，不翻页、不监听；认不出就返回 null，让界面说「未能识别」而不是瞎填。
  */
 data class SenseNode(
     val text: String,
@@ -114,9 +112,9 @@ object SenseRules {
         )
     }.getOrDefault(SenseScreen("", emptyList()))
 
-    /** 识别一屏。命中不了就返回 null（调用方据此提示"没认出"，不要瞎填） */
+    /** 识别一屏。命中不了就返回 null（调用方据此提示"未能识别"，不要瞎填） */
     fun best(screen: SenseScreen): SenseDraft? =
-        MihuashiDetail.extract(screen) ?: HuajiaOrder.extract(screen)
+        MihuashiDetail.extract(screen)
 
     /** 多空格压成一个（抓下来的文字里常有连续全角空格/缩进） */
     private fun String.sp(): String = trim().replace(Regex("\\s{2,}"), " ")
@@ -227,136 +225,6 @@ object SenseRules {
                     ?.let { first ->
                         if (label == L_TIME) row.firstOrNull { DATE.containsMatchIn(it.label) }?.label else first.label
                     }
-        }
-    }
-
-    // ── 画加 · 订单快照 ────────────────────────────────────────────
-
-    /**
-     * 画加（网易，`com.netease.huajia`）的「订单快照」页。
-     *
-     * 和米画师完全相反：这一屏**一个 `viewIdResourceName` 都没有**（抓下来 `id` 全是空串），
-     * 所以只能靠几何关系取：
-     * - 一行一值：标签文字 → 同一行**右侧**最近的那个节点（`商品总价` / `付款时间` / `创建时间`）。
-     * - 顶部三件套：`卖家昵称` / `标题` / `¥ 价格` 自上而下排，**标题就压在价格正上方**，
-     *   所以以「单独的 ¥」为锚点往上找最近一行 = 标题，再往上找最近一行 = 卖家昵称。
-     *
-     * 只认这一种页：画加的「橱窗」「作品详情」长得像，但**没有** `商品总价 / 实付款 / 订单编号 / 付款时间`
-     * 这些订单独有的标签。至少要命中 2 个才动手，认不出就返回 null。
-     */
-    private object HuajiaOrder {
-
-        const val SOURCE = "画加 · 订单快照"
-
-        /** 包名判据：用 contains 而不是 equals —— 画加有多个渠道包后缀，换了渠道还能用 */
-        private const val PKG = "huajia"
-
-        /** 订单快照独有的标签。命中 2 个才认（少了宁可说没认出） */
-        private val ANCHORS = listOf("商品总价", "实付款", "订单编号", "付款时间", "订单快照", "服务费")
-
-        /**
-         * 界面骨架文字，取标题 / 画师时必须排除。
-         * 比较时先 `trimEnd('：', ':')` —— 「预计完成时间:」在抓下来的文字里带冒号。
-         */
-        private val CHROME = setOf(
-            "订单快照", "订单信息", "商品总价", "服务费(5%)", "实付款",
-            "预计完成时间", "稿件授权范围", "交付节点", "交易快照",
-            "订单编号", "创建时间", "付款时间", "付款渠道",
-        )
-
-        private fun SenseNode.isChrome(): Boolean =
-            label.trimEnd('：', ':').trim() in CHROME || label.startsWith("¥") || label.startsWith("￥")
-
-        fun extract(s: SenseScreen): SenseDraft? {
-            if (!s.pkg.contains(PKG, ignoreCase = true)) return null
-            val hits = ANCHORS.count { key -> s.nodes.any { it.label.contains(key) } }
-            if (hits < 2) return null
-
-            val title = pickTitle(s)
-            val artist = pickArtist(s, title)
-            val price = pickPrice(s)
-            // 收稿时间：`付款时间` 优先（下单真正生效的时刻），没有才退到 `创建时间`。
-            // **不用**「预计完成时间」—— 那是「接单后 1 天内」这种时长，不是日期。
-            val date = rowValue(s, "付款时间")?.let { parseDate(it) }
-                ?: rowValue(s, "创建时间")?.let { parseDate(it) }
-
-            if (title == null && artist == null && price == null && date == null) return null
-            return SenseDraft(
-                source = SOURCE,
-                platform = "画加",
-                title = title,
-                artist = artist,
-                price = price,
-                receivedAt = date,
-            )
-        }
-
-        /** 上半屏那个单独的「¥」—— 它是「标题在上、价格在下」这段版式的锚点 */
-        private fun priceAnchor(s: SenseScreen): SenseNode? =
-            s.nodes
-                .filter { it.label == "¥" || it.label == "￥" }
-                .filter { s.h == 0 || it.y < s.h / 2 }
-                .minByOrNull { it.y }
-
-        private fun pickTitle(s: SenseScreen): String? {
-            val anchor = priceAnchor(s)
-            if (anchor != null) {
-                // 价格正上方最近的一行 = 标题（卖家昵称在它上面更远处）
-                s.nodes
-                    .filter { it !== anchor && it.label.isNotBlank() && !it.isChrome() }
-                    .filter { it.y + it.h <= anchor.y + 8 }
-                    .filter { it.w >= 120 }
-                    .maxByOrNull { it.y }
-                    ?.let { return it.label.sp() }
-            }
-            // 兜底：上半屏最宽的那行。标题通常比「预计完成时间」这类标签长得多
-            return s.nodes
-                .filter { it.label.isNotBlank() && !it.isChrome() && it.w >= 300 }
-                .filter { s.h == 0 || it.y < s.h * 4 / 10 }
-                .maxByOrNull { it.w }
-                ?.label?.sp()
-        }
-
-        /**
-         * 画师 = 标题上方那一行昵称。
-         *
-         * ⚠️ 这是这一屏唯一"靠版式推断"的字段：画加订单快照顶部只画一个昵称，没有「卖家 / 买家」标签。
-         * 若有一天这行其实是买家，识别结果会填错人 —— 所以它只是**预填**，表单里可以改。
-         */
-        private fun pickArtist(s: SenseScreen, title: String?): String? {
-            val t = s.nodes.firstOrNull { it.label.sp() == title } ?: return null
-            return s.nodes
-                .filter { it !== t && it.label.isNotBlank() && !it.isChrome() }
-                .filter { it.y + it.h <= t.y + 8 }
-                .filter { it.w in 40..500 && it.label.length <= 24 }
-                .filter { HAS_CJK.containsMatchIn(it.label) }
-                .maxByOrNull { it.y }
-                ?.label?.trim()
-        }
-
-        private fun pickPrice(s: SenseScreen): Long? {
-            // 稿酬口径 = 给画师的钱 → **商品总价**。
-            // 绝不能用「实付款」：它含 5% 服务费（本屏 18 + 0.9 = 18.9），每单会多记一点，
-            // 和自己的账对不上，而且人眼看不出来差在哪。
-            rowValue(s, "商品总价")?.let { parseYuan(it) }?.let { return it }
-
-            // 兜底：标题下面那对是**两个节点**（「¥」和「18」分开），取同一行里 ¥ 右边最近的那个
-            val yuan = priceAnchor(s) ?: return null
-            return s.nodes
-                .filter { it !== yuan && overlapY(it, yuan) >= 0.5f }
-                .filter { it.x >= yuan.x + yuan.w / 2 }
-                .minByOrNull { it.x }
-                ?.let { parseYuan(it.label) }
-        }
-
-        /** 标签 → 同行右侧最近的那个值 */
-        private fun rowValue(s: SenseScreen, label: String): String? {
-            val lab = s.nodes.firstOrNull { it.label.trimEnd('：', ':').trim() == label } ?: return null
-            return s.nodes
-                .filter { it !== lab && it.label.isNotBlank() && overlapY(it, lab) >= 0.5f }
-                .filter { it.cx > lab.cx }
-                .minByOrNull { it.x }
-                ?.label?.sp()
         }
     }
 

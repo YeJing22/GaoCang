@@ -18,14 +18,34 @@ import androidx.compose.runtime.setValue
  */
 object SenseHandoff {
 
+    /** 服务侧订阅状态变化，实时刷新悬浮球「记 / 取」显示，无需轮询 */
+    @Volatile
+    var onStateChange: (() -> Unit)? = null
+
     /** 非空 = 刚识别到一屏，界面应该处理它（新建或套用） */
     var draft by mutableStateOf<SenseDraft?>(null)
 
     /** 稿仓是否在前台。服务据此判断"点球"是记目标还是抓屏 —— 在稿仓里抓自己的屏没有意义 */
-    var appVisible by mutableStateOf(false)
+    private var _appVisible by mutableStateOf(false)
+    var appVisible: Boolean
+        get() = _appVisible
+        set(v) {
+            if (_appVisible != v) {
+                _appVisible = v
+                onStateChange?.invoke()
+            }
+        }
 
     /** 详情页正在看哪张稿；非空 = 在稿仓里点球就是"记住这一张" */
-    var uiArtId by mutableStateOf<String?>(null)
+    private var _uiArtId by mutableStateOf<String?>(null)
+    var uiArtId: String?
+        get() = _uiArtId
+        set(v) {
+            if (_uiArtId != v) {
+                _uiArtId = v
+                onStateChange?.invoke()
+            }
+        }
 
     /** 已记住、等米画师那边回来套用的稿件 id。服务写、Root 读，读到即清 */
     @Volatile
@@ -41,12 +61,14 @@ object SenseHandoff {
     fun arm(artId: String) {
         targetArtId = artId
         targetAt = System.currentTimeMillis()
+        onStateChange?.invoke()
     }
 
     /** 取出并清掉目标；过期 / 没设过都返回 null（调用方据此退回"弹框选择"） */
     fun takeTarget(): String? {
         val id = targetArtId ?: return null
         targetArtId = null
+        onStateChange?.invoke()
         return if (System.currentTimeMillis() - targetAt <= TTL_MS) id else null
     }
 
@@ -54,5 +76,6 @@ object SenseHandoff {
     fun clearTarget() {
         targetArtId = null
         targetAt = 0L
+        onStateChange?.invoke()
     }
 }

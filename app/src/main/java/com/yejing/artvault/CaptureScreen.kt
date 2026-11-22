@@ -252,7 +252,7 @@ fun CaptureScreen(
                     Spacer(Modifier.height(Space.s))
                     Text(
                         buildString {
-                            append("已从「${draft.source}」读入 ${draft.hitCount} 项")
+                            append("已读入 ${draft.hitCount} 项")
                             if (draft.missing.isNotEmpty()) {
                                 append("，没认出：${draft.missing.joinToString("、")}")
                             }

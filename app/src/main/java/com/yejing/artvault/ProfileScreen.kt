@@ -228,12 +228,26 @@ fun ProfileScreen(
                     "屏幕取字",
                     trailing = { ValuePill(if (senseOn) "已开启" else "去开启 ›") },
                     sub = if (senseOn) {
-                        "在米画师等页面点右侧「取」悬浮球：抓一次当前屏文字，落到库里的 .debug/"
+                        "点击悬浮球抓取信息，目前仅适配米画师 我的稿件->点进某张稿件->更多 弹出的详细信息。长按可收起悬浮球"
                     } else {
-                        "用无障碍读当前屏的文字（只在点悬浮球时读一次，不监听输入、不联网）"
+                        "通过无障碍服务自动填入稿件信息（点击悬浮球抓取，不会监听或联网）"
                     },
                     onClick = { ScreenSenseService.openSettings(ctx) },
                 )
+                if (senseOn) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                ScreenSenseService.requestShowBall(ctx)
+                                toast(ctx, "已重新显示悬浮球")
+                            }
+                            .padding(top = 2.dp, bottom = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text("重新显示悬浮球", style = T.label, color = Accent)
+                    }
+                }
             }
 
             SectionLabel("相册与导出")

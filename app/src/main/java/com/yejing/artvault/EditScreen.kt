@@ -420,7 +420,7 @@ fun EditScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column(Modifier.weight(1f)) {
-                            Text("转为制图（临时迁移）", style = T.bodySm, color = OnMid)
+                            Text("转为制图", style = T.bodySm, color = OnMid)
                             Text("移入「制图」归档、不计入统计，可撤销", style = T.micro, color = Muted)
                         }
                         Text("›", style = T.titleSm, color = Muted)

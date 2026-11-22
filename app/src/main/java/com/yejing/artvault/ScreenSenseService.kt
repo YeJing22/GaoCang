@@ -1,11 +1,15 @@
 package com.yejing.artvault
 
 import android.accessibilityservice.AccessibilityService
+import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.view.Gravity
 import android.view.MotionEvent
@@ -15,6 +19,7 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -71,14 +76,47 @@ class ScreenSenseService : AccessibilityService() {
             }
         }
 
+        /** 仅本应用可见：从「我的」页重新显示已收起的悬浮球 */
+        const val ACTION_SHOW_BALL = "com.yejing.artvault.action.SHOW_SENSE_BALL"
+
+        fun requestShowBall(ctx: Context) {
+            ctx.sendBroadcast(Intent(ACTION_SHOW_BALL).setPackage(ctx.packageName))
+        }
+
         /** 只留最近 5 份抓取结果：这是调试用的原始文本，留多了既占地方也说不清 */
         private const val KEEP = 5
     }
 
     private var ball: View? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    /** 在当前这次详情页停留里已经点过「记」的稿件 id；点完立刻回「取」，离开详情页后清空 */
+    private var armedOnVisit: String? = null
+    private var flashing: Boolean = false
+    private val resetFlash = Runnable {
+        flashing = false
+        refreshBallLabel()
+    }
+    private var receiverRegistered = false
+    private val showBallReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == ACTION_SHOW_BALL) showBall()
+        }
+    }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        SenseHandoff.onStateChange = { mainHandler.post { syncBallState() } }
+        if (!receiverRegistered) {
+            runCatching {
+                ContextCompat.registerReceiver(
+                    this,
+                    showBallReceiver,
+                    IntentFilter(ACTION_SHOW_BALL),
+                    ContextCompat.RECEIVER_NOT_EXPORTED,
+                )
+                receiverRegistered = true
+            }
+        }
         showBall()
     }
 
@@ -89,13 +127,40 @@ class ScreenSenseService : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     override fun onUnbind(intent: Intent?): Boolean {
-        hideBall()
+        teardown()
         return super.onUnbind(intent)
     }
 
     override fun onDestroy() {
-        hideBall()
+        teardown()
         super.onDestroy()
+    }
+
+    private fun teardown() {
+        SenseHandoff.onStateChange = null
+        mainHandler.removeCallbacks(resetFlash)
+        flashing = false
+        armedOnVisit = null
+        if (receiverRegistered) {
+            runCatching { unregisterReceiver(showBallReceiver) }
+            receiverRegistered = false
+        }
+        hideBall()
+    }
+
+    private fun syncBallState() {
+        if (SenseHandoff.uiArtId != armedOnVisit) armedOnVisit = null
+        refreshBallLabel()
+    }
+
+    /** 球面基态文字：在详情页且尚未为当前停留记住目标 →「记」，其余情况 →「取」 */
+    private fun baseLabel(): String {
+        val uiId = SenseHandoff.uiArtId
+        return if (SenseHandoff.appVisible && uiId != null && uiId != armedOnVisit) "记" else "取"
+    }
+
+    private fun refreshBallLabel() {
+        if (!flashing) (ball as? TextView)?.text = baseLabel()
     }
 
     // ── 悬浮球 ────────────────────────────────────────────────────────
@@ -107,7 +172,7 @@ class ScreenSenseService : AccessibilityService() {
         val side = (44 * d).toInt()
 
         val tv = TextView(this).apply {
-            text = "取"
+            text = baseLabel()
             textSize = 15f
             gravity = Gravity.CENTER
             setTextColor(0xFF1A1206.toInt())
@@ -165,10 +230,10 @@ class ScreenSenseService : AccessibilityService() {
                 MotionEvent.ACTION_UP -> {
                     val held = e.eventTime - e.downTime
                     when {
-                        // 长按 = 收起悬浮球（不是拖动、也不是点）。下次要用得去系统设置里关掉再开
+                        // 长按 = 收起悬浮球（不是拖动、也不是点）。可在「我的 → 屏幕取字」重新显示
                         !moved && held > 600 -> {
                             hideBall()
-                            toast("悬浮球已收起。要再打开：设置 → 无障碍 → 稿仓 · 屏幕取字 关掉再开")
+                            toast("悬浮球已收起")
                         }
                         !moved -> capture()
                     }
@@ -199,14 +264,14 @@ class ScreenSenseService : AccessibilityService() {
         val armed = SenseHandoff.uiArtId
         if (SenseHandoff.appVisible && armed != null) {
             SenseHandoff.arm(armed)
-            markArmed()
-            toast("已记住这一张。去米画师页面点「取」，回来就直接套用到它")
+            onArmedInDetail(armed)
+            toast("进入录入模式，在米画师页面再次点击悬浮球，信息录入本稿件")
             return
         }
         if (SenseHandoff.appVisible) {
             // 稿库里（没有详情页）点球：抓到的只会是我们自己的界面
             flash("?")
-            toast("先打开要套用的稿件详情，再点「取」")
+            toast("先打开要套用的稿件详情，再点悬浮球")
             return
         }
 
@@ -237,8 +302,8 @@ class ScreenSenseService : AccessibilityService() {
         val out = runCatching { save(text) }.getOrNull()
         flash("?")
         toast(
-            if (out != null) "没认出稿件详情，已存 ${out.name}"
-            else "没认出稿件详情，且写文件失败",
+            if (out != null) "未能识别，抓取信息请查看库文件夹下的 .debug 文件"
+            else "未能识别，且写入 .debug 失败",
         )
     }
 
@@ -328,15 +393,18 @@ class ScreenSenseService : AccessibilityService() {
      */
     private fun flash(symbol: String) {
         val tv = ball as? TextView ?: return
+        flashing = true
+        mainHandler.removeCallbacks(resetFlash)
         tv.text = symbol
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            (ball as? TextView)?.text = "取"
-        }, 1200)
+        mainHandler.postDelayed(resetFlash, 1200)
     }
 
-    /** 记住目标后**不自动复原**：球停在「记」上，让"我正在等你去米画师"这个状态看得见 */
-    private fun markArmed() {
-        (ball as? TextView)?.text = "记"
+    /** 在详情页点球记住目标后：球面立刻切回「取」（提示下一步去米画师点它抓屏） */
+    private fun onArmedInDetail(artId: String) {
+        armedOnVisit = artId
+        flashing = false
+        mainHandler.removeCallbacks(resetFlash)
+        refreshBallLabel()
     }
 
     private fun toast(msg: String) {
