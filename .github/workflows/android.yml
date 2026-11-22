@@ -21,11 +21,12 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
+      # 不用第三方 setup-android 动作：它自己去下 cmdline-tools，Google 换版本时会 404。
+      # ubuntu-latest 镜像自带 ANDROID_SDK_ROOT 与 cmdline-tools/latest，直接用它的。
       - name: Install Android SDK Platform 37.2
-        run: yes | sdkmanager --install "platforms;android-37.2"
+        run: |
+          SDKM="${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --install "platforms;android-37.2"
 
       - name: Run unit tests and assemble Debug APK
         run: ./gradlew :app:testDebugUnitTest :app:assembleDebug
