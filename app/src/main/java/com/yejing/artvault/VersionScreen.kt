@@ -424,9 +424,19 @@ fun VersionEditor(
                             .clip(RoundedCornerShape(14.dp))
                             .background(if (isDragging) CHigh else Color.Transparent)
                             // 正在看的那一版：整行底色（主图的琥珀描边在缩略图上，两者可同时出现）
-                            .background(
-                                if (!selecting && i == currentIdx) AccentC.copy(alpha = 0.35f) else Color.Transparent,
-                                RoundedCornerShape(12.dp),
+                            // 浅色主题下 AccentC 本身已是浅粉彩，再乘 0.35 会和底色糊成一片，改用不透明 AccentC + AccentC2 描边
+                            .then(
+                                if (!selecting && i == currentIdx) {
+                                    if (ThemeState.palette.isDark) {
+                                        Modifier.background(AccentC.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                                    } else {
+                                        Modifier
+                                            .background(AccentC, RoundedCornerShape(12.dp))
+                                            .border(1.dp, AccentC2, RoundedCornerShape(12.dp))
+                                    }
+                                } else {
+                                    Modifier
+                                }
                             )
                             // 多选优先：开启多选后整行点击 = 勾选；否则整行点击 = 切版本（硬切）
                             .then(

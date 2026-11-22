@@ -186,10 +186,22 @@ internal fun InfoTab(
                 .background(CardBg),
         ) {
             // 票头：渐变只铺在这一块
+            // 浅色主题下 AccentC.copy(0.5f) 贴在浅卡片上几乎看不出，改由 AccentC2 起头过渡到 AccentC 再渐隐
+            val headerBrush = if (ThemeState.palette.isDark) {
+                Brush.horizontalGradient(listOf(AccentC.copy(alpha = 0.5f), Color.Transparent))
+            } else {
+                Brush.horizontalGradient(
+                    listOf(
+                        AccentC2.copy(alpha = 0.58f),
+                        AccentC.copy(alpha = 0.32f),
+                        Color.Transparent,
+                    )
+                )
+            }
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .background(Brush.horizontalGradient(listOf(AccentC.copy(alpha = 0.5f), Color.Transparent)))
+                    .background(headerBrush)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
